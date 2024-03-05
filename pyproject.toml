@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "benchmark"
+version = "0.1.0"
+description = "Code and notebooks to run the benchmarks and generate the outputs for my bachelors thesis."
+authors = ["tobiasgrantner <tobias.grantner@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+pandas = "^2.2.1"
+ipykernel = "^6.29.2"
+black = {extras = ["jupyter"], version = "^24.2.0"}
+pre-commit = "^3.6.2"
+requests = "^2.31.0"
+tuspy = "^1.0.3"
+seaborn = "^0.13.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

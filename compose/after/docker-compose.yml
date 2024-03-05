@@ -1,0 +1,281 @@
+# INFO: This compose file builds the local branch and deploys them as a small, local test instance
+# MODIFIED: 2023-06-01
+# MAINTAINER: Martin Weise <martin.weise@tuwien.ac.at>
+
+version: "3.6"
+
+volumes:
+  metadata-db-data:
+  data-db-data:
+  upload-service-data:
+  search-db-data:
+  broker-service-data:
+  authentication-service-data:
+
+networks:
+  public:
+    name: public
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.31.0.0/16
+  core:
+    name: core
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.32.0.0/16
+
+services:
+
+  dbrepo-metadata-db:
+    restart: "no"
+    container_name: dbrepo-metadata-db
+    hostname: metadata-db
+    build: ./dbrepo-metadata-db
+    image: dbrepo/metadata-db@sha256:501be1137c08133908a5f6f86ffceeb9a921a20559398a3a1c7c49c1f4264e2a
+    networks:
+      core:
+    volumes:
+      - metadata-db-data:/bitnami/mariadb
+      - ./dbrepo-metadata-db/setup-schema_local.sql:/docker-entrypoint-initdb.d/setup-schema_local.sql
+    ports:
+      - "3306:3306"
+      - "9100:9100"
+    env_file:
+      - .env
+    logging:
+      driver: json-file
+
+  dbrepo-data-db:
+    restart: "no"
+    container_name: dbrepo-data-db
+    hostname: data-db
+    image: mariadb:10.5
+    networks:
+      core:
+    volumes:
+      - data-db-data:/var/lib/mysql
+      - "/tmp:/tmp"
+    ports:
+      - "3307:3306"
+      - "9101:9100"
+    env_file:
+      - .env
+    environment:
+      - MARIADB_ROOT_PASSWORD=$USER_DB_PASSWORD
+    healthcheck:
+      test: mysqladmin ping --user="$USER_DB_USERNAME" --password="$USER_DB_PASSWORD" --silent
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    logging:
+      driver: json-file
+
+  dbrepo-upload-service:
+    restart: "no"
+    container_name: dbrepo-upload-service
+    hostname: upload-service
+    image: tusproject/tusd:v1.12
+    command:
+      - "--base-path=/api/upload/files/"
+    networks:
+      core:
+    env_file:
+      - .env
+    volumes:
+      - upload-service-data:/data
+      - "/tmp:/srv/tusd-data/data"
+    logging:
+      driver: json-file
+
+  dbrepo-authentication-service:
+    restart: "no"
+    container_name: dbrepo-authentication-service
+    hostname: authentication-service
+    image: dbrepo/authentication-service@sha256:245fd6207ed43e69c4f86f9a3b707fa0f25e7775f7c2753963a7c8b1fd7fab5d 
+    build: ./dbrepo-authentication-service
+    networks:
+      core:
+    ports:
+      - "8443:8443"
+      - "8080:8080"
+    env_file:
+      - .env
+    volumes:
+      - authentication-service-data:/opt/keycloak/data/
+    depends_on:
+      dbrepo-metadata-db:
+        condition: service_healthy
+    logging:
+      driver: json-file
+
+  dbrepo-metadata-service:
+    restart: "no"
+    container_name: dbrepo-metadata-service
+    hostname: metadata-service
+    build: ./dbrepo-metadata-service
+    image: dbrepo/metadata-service@sha256:46df137a6566167c880f0cac6ec4f4a750f1c31a2661818c0cbcbeea780dad0d
+    networks:
+      core:
+    env_file:
+      - .env
+    volumes:
+      - "/tmp:/tmp"
+    ports:
+      - "9099:9099"
+    healthcheck:
+      test: wget -qO- localhost:9099/actuator/health/readiness | grep -q "UP" || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    depends_on:
+      dbrepo-authentication-service:
+        condition: service_healthy
+      dbrepo-metadata-db:
+        condition: service_healthy
+      dbrepo-search-db:
+        condition: service_healthy
+    logging:
+      driver: json-file
+
+  dbrepo-analyse-service:
+    restart: "no"
+    container_name: dbrepo-analyse-service
+    hostname: analyse-service
+    build: ./dbrepo-analyse-service
+    image: dbrepo/analyse-service@sha256:84fdfb1f7de39a3a7db14622a2a538d1a799bba5c628cae3c001a7689609bc10
+    networks:
+      core:
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    volumes:
+      - "/tmp:/tmp"
+    logging:
+      driver: json-file
+
+  dbrepo-broker-service:
+    restart: "no"
+    container_name: dbrepo-broker-service
+    hostname: broker-service
+    build: ./dbrepo-broker-service
+    image: dbrepo/broker-service@sha256:6d90c251f24959ebb7c8dcf413185892ebe58bfbeed4b002fc79a9b790a2a2bd
+    networks:
+      core:
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    env_file:
+      - .env
+    depends_on:
+      dbrepo-authentication-service:
+        condition: service_healthy
+    volumes:
+      - broker-service-data:/var/lib/rabbitmq/
+    logging:
+      driver: json-file
+
+  dbrepo-search-db:
+    restart: "no"
+    container_name: dbrepo-search-db
+    hostname: search-db
+    image: opensearchproject/opensearch:2.8.0
+    networks:
+      core:
+    ports:
+      - "2020:2020"
+      - "9200:9200"
+    env_file:
+      - .env
+    healthcheck:
+      test: curl -s localhost:9200/_cat/indices | grep -q "user" || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    environment:
+      discovery.type: "single-node"
+      ES_JAVA_OPTS: "-Xms4g -Xmx4g"
+      logger.level: "WARN"
+      plugins.security.disabled: "true"
+      bootstrap.memory_lock: "true"
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+    volumes:
+      - search-db-data:/usr/share/elasticsearch/data
+    logging:
+      driver: json-file
+
+  dbrepo-search-sync-agent:
+    restart: "no"
+    container_name: dbrepo-search-sync-agent
+    hostname: search-startup-agent
+    build: ./dbrepo-search-sync-agent
+    image: dbrepo/search-sync-agent@sha256:0788eda641558cb4c5e06d6f01ce1cfd6151b9f9875fa55f847ae3cf7ae491ec
+    networks:
+      core:
+    env_file:
+      - .env
+    healthcheck:
+      test: wget -qO- localhost:9050/actuator/health/readiness | grep -q "UP" || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    depends_on:
+      dbrepo-metadata-db:
+        condition: service_healthy
+      dbrepo-search-db:
+        condition: service_started
+      dbrepo-authentication-service:
+        condition: service_healthy
+    logging:
+      driver: json-file
+
+  dbrepo-ui:
+    restart: "no"
+    container_name: dbrepo-ui
+    hostname: ui
+    build: ./dbrepo-ui
+    image: dbrepo/ui@sha256:87b29b62ba3a1c0efffaf44b69c77483affc22c4877b3304a65ae7b05bc697d3
+    networks:
+      core:
+      public:
+    env_file:
+      - .env
+    depends_on:
+      dbrepo-upload-service:
+        condition: service_started
+    logging:
+      driver: json-file
+
+  dbrepo-gateway-service:
+    restart: "no"
+    container_name: dbrepo-gateway-service
+    hostname: gateway-service
+    image: nginx:1.25-alpine-slim
+    networks:
+      core:
+      public:
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./dbrepo-gateway-service/dbrepo.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      dbrepo-analyse-service:
+        condition: service_healthy
+      dbrepo-authentication-service:
+        condition: service_healthy
+      dbrepo-broker-service:
+        condition: service_healthy
+      dbrepo-metadata-service:
+        condition: service_healthy
+      dbrepo-search-db:
+        condition: service_healthy
+      dbrepo-ui:
+        condition: service_started
+    logging:
+      driver: json-file
