@@ -18,11 +18,13 @@ stop-after:
 stop-queue:
 	docker compose -f compose/queue/docker-compose.yml down
 
-remove-before:
-	docker ps -a -q --filter name=dbrepo-userdb-* | xargs -r docker stop
-	docker ps -a -q --filter name=dbrepo-userdb-* | xargs -r docker rm -v
+remove-before: remove-before-userdb
 	docker compose -f compose/before/docker-compose.yml down -v
 	docker volume ls -q --filter name=dbrepo-userdb-* | xargs -r docker volume rm
+
+remove-before-userdb:
+	docker ps -a -q --filter name=dbrepo-userdb-* | xargs -r docker stop
+	docker ps -a -q --filter name=dbrepo-userdb-* | xargs -r docker rm -v
 
 remove-after:
 	docker compose -f compose/after/docker-compose.yml down -v
