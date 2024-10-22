@@ -14,6 +14,8 @@ pre-commit = "^3.6.2"
 requests = "^2.31.0"
 tuspy = "^1.0.3"
 seaborn = "^0.13.2"
+tqdm = "^4.66.5"
+ipywidgets = "^8.1.5"
 
 
 [build-system]

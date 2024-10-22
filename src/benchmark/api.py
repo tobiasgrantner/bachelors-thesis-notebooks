@@ -173,7 +173,7 @@ class Api:
         return response.json()
 
 
-class ApiBefore(Api):
+class ApiWithContainers(Api):
 
     def _database_url(self, database_id: int) -> str:
         return f"http://localhost/api/container/{database_id}/database/{database_id}"
@@ -215,20 +215,8 @@ class ApiBefore(Api):
 
         return container_id
 
-    def _upload_file(self, file: str | PathLike) -> str:
-        with open(file, "rb") as f:
-            response = post(
-                "http://localhost/server-middleware/upload",
-                headers=self._get_headers(),
-                files={
-                    "file": f,
-                },
-            )
-        response.raise_for_status()
-        return response.json()["path"]
 
-
-class ApiAfter(Api):
+class ApiWithoutContainers(Api):
 
     def _database_url(self, database_id: int) -> str:
         return f"http://localhost/api/database/{database_id}"
@@ -246,6 +234,24 @@ class ApiAfter(Api):
         response.raise_for_status()
         return response.json()["id"]
 
+
+class ApiWithoutTus(Api):
+
+    def _upload_file(self, file: str | PathLike) -> str:
+        with open(file, "rb") as f:
+            response = post(
+                "http://localhost/server-middleware/upload",
+                headers=self._get_headers(),
+                files={
+                    "file": f,
+                },
+            )
+        response.raise_for_status()
+        return response.json()["path"]
+
+
+class ApiWithTus(Api):
+
     def _upload_file(self, file: str | PathLike) -> str:
         client = TusClient(
             "http://localhost/api/upload/files", headers=self._get_headers()
@@ -254,3 +260,15 @@ class ApiAfter(Api):
         uploader.upload()
 
         return f'/tmp/{uploader.url.split("/")[-1]}'
+
+
+class ApiBeforeEnvironmentIndependence(ApiWithContainers, ApiWithoutTus):
+    pass
+
+
+class ApiAfterEnvironmentIndependence(ApiWithoutContainers, ApiWithoutTus):
+    pass
+
+
+class ApiServiceMerge(ApiWithoutContainers, ApiWithTus):
+    pass

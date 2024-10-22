@@ -32,7 +32,6 @@ services:
     restart: "no"
     container_name: dbrepo-metadata-db
     hostname: metadata-db
-    build: ./dbrepo-metadata-db
     image: dbrepo/metadata-db@sha256:501be1137c08133908a5f6f86ffceeb9a921a20559398a3a1c7c49c1f4264e2a
     networks:
       core:
@@ -51,7 +50,7 @@ services:
     restart: "no"
     container_name: dbrepo-data-db
     hostname: data-db
-    image: mariadb:10.5
+    image: mariadb:10.5@sha256:4b0be45e2daf6e64c374d0bc7c6340289241bcd6756dd0a3cfeb20ceafdb8302
     networks:
       core:
     volumes:
@@ -93,8 +92,7 @@ services:
     restart: "no"
     container_name: dbrepo-authentication-service
     hostname: authentication-service
-    image: dbrepo/authentication-service@sha256:245fd6207ed43e69c4f86f9a3b707fa0f25e7775f7c2753963a7c8b1fd7fab5d 
-    build: ./dbrepo-authentication-service
+    image: dbrepo/authentication-service@sha256:245fd6207ed43e69c4f86f9a3b707fa0f25e7775f7c2753963a7c8b1fd7fab5d
     networks:
       core:
     ports:
@@ -114,7 +112,6 @@ services:
     restart: "no"
     container_name: dbrepo-metadata-service
     hostname: metadata-service
-    build: ./dbrepo-metadata-service
     image: dbrepo/metadata-service@sha256:46df137a6566167c880f0cac6ec4f4a750f1c31a2661818c0cbcbeea780dad0d
     networks:
       core:
@@ -143,7 +140,6 @@ services:
     restart: "no"
     container_name: dbrepo-analyse-service
     hostname: analyse-service
-    build: ./dbrepo-analyse-service
     image: dbrepo/analyse-service@sha256:84fdfb1f7de39a3a7db14622a2a538d1a799bba5c628cae3c001a7689609bc10
     networks:
       core:
@@ -160,7 +156,6 @@ services:
     restart: "no"
     container_name: dbrepo-broker-service
     hostname: broker-service
-    build: ./dbrepo-broker-service
     image: dbrepo/broker-service@sha256:6d90c251f24959ebb7c8dcf413185892ebe58bfbeed4b002fc79a9b790a2a2bd
     networks:
       core:
@@ -181,7 +176,7 @@ services:
     restart: "no"
     container_name: dbrepo-search-db
     hostname: search-db
-    image: opensearchproject/opensearch:2.8.0
+    image: opensearchproject/opensearch@sha256:7d7f306996c0901956e0c413c817f4e249bd3d27c9c9ea6460bd7da88df73039
     networks:
       core:
     ports:
@@ -213,7 +208,6 @@ services:
     restart: "no"
     container_name: dbrepo-search-sync-agent
     hostname: search-startup-agent
-    build: ./dbrepo-search-sync-agent
     image: dbrepo/search-sync-agent@sha256:0788eda641558cb4c5e06d6f01ce1cfd6151b9f9875fa55f847ae3cf7ae491ec
     networks:
       core:
@@ -238,7 +232,6 @@ services:
     restart: "no"
     container_name: dbrepo-ui
     hostname: ui
-    build: ./dbrepo-ui
     image: dbrepo/ui@sha256:87b29b62ba3a1c0efffaf44b69c77483affc22c4877b3304a65ae7b05bc697d3
     networks:
       core:
@@ -255,7 +248,7 @@ services:
     restart: "no"
     container_name: dbrepo-gateway-service
     hostname: gateway-service
-    image: nginx:1.25-alpine-slim
+    image: nginx:1.25-alpine-slim@sha256:22414422d1ba07234d9b784f6453b4f150c0fa573ad0b62e163da12b68488ae1
     networks:
       core:
       public:

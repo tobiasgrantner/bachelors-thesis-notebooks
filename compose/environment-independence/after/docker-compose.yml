@@ -6,17 +6,12 @@ version: "3.6"
 
 volumes:
   metadata-db-data:
+  user-db-data:
   search-db-data:
   broker-service-data:
   authentication-service-data:
 
 networks:
-  userdb:
-    name: userdb
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.30.0.0/16
   public:
     name: public
     driver: bridge
@@ -36,12 +31,12 @@ services:
     restart: "no"
     container_name: dbrepo-metadata-db
     hostname: metadata-db
-    build: ./dbrepo-metadata-db
-    image: dbrepo/metadata-db@sha256:3bdd373b35f80a5726786ea97f0a4adb86af29de5feb5f383be5fc2836bc47a5
+    image: dbrepo/metadata-db@sha256:35e9112eb4a9d357f080335a6fc32876c1c219f768a0351f8d63197e804f8506
     networks:
       core:
     volumes:
       - metadata-db-data:/var/lib/mysql
+      - ./dbrepo-metadata-db/setup-schema_local.sql:/docker-entrypoint-initdb.d/setup-schema_local.sql
     ports:
       - "3306:3306"
       - "9100:9100"
@@ -50,21 +45,42 @@ services:
     logging:
       driver: json-file
 
+  dbrepo-user-db:
+    restart: "no"
+    container_name: dbrepo-user-db
+    hostname: user-db
+    image: mariadb:10.5@sha256:4b0be45e2daf6e64c374d0bc7c6340289241bcd6756dd0a3cfeb20ceafdb8302
+    networks:
+      core:
+    volumes:
+      - user-db-data:/var/lib/mysql
+      - "/tmp:/tmp"
+    ports:
+      - "3307:3306"
+      - "9101:9100"
+    env_file:
+      - .env
+    environment:
+      - MARIADB_ROOT_PASSWORD=$USER_DB_PASSWORD
+    healthcheck:
+      test: mysqladmin ping --user="$USER_DB_USERNAME" --password="$USER_DB_PASSWORD" --silent
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    logging:
+      driver: json-file
+
   dbrepo-database-service:
     restart: "no"
     container_name: dbrepo-database-service
     hostname: database-service
-    build: ./dbrepo-database-service
-    image: dbrepo/database-service@sha256:207f0d2c92c37017772edd7842bea97c26a8c3babd0090f682ea15059ea5e233
+    image: dbrepo/database-service@sha256:1fad3a2a8d4f4d09cb18fa0b377129c4a0c23294246c36dc107f08bc30bb92b1
     networks:
-      userdb:
       core:
     ports:
       - "9092:9092"
     env_file:
       - .env
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       dbrepo-container-service:
         condition: service_healthy
@@ -81,16 +97,13 @@ services:
     restart: "no"
     container_name: dbrepo-container-service
     hostname: container-service
-    build: ./dbrepo-container-service
-    image: dbrepo/container-service@sha256:3f68b189aa0de238ae18ed1114b017922387661628c10ab8e673ac209f69802b
+    image: dbrepo/container-service@sha256:3eb0b56b76216c5167b0ae2d75fd07e886a0379e9ca72327654d032424a27588
     networks:
       core:
     ports:
       - "9091:9091"
     env_file:
       - .env
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       dbrepo-authentication-service:
         condition: service_healthy
@@ -103,8 +116,7 @@ services:
     restart: "no"
     container_name: dbrepo-authentication-service
     hostname: authentication-service
-    image: dbrepo/authentication-service@sha256:f1628ceacc1de8acbcb01a6855b62e9726e637241c189d3327264aaaf8004f27
-    build: ./dbrepo-authentication-service
+    image: dbrepo/authentication-service@sha256:985e6434182eca39c096bcc2a712ca3f0a345592cf4df805e908cd5399025035
     networks:
       core:
     ports:
@@ -124,11 +136,9 @@ services:
     restart: "no"
     container_name: dbrepo-query-service
     hostname: query-service
-    build: ./dbrepo-query-service
-    image: dbrepo/query-service@sha256:3323f31216caca56e02bc262ad6daf9bd0c41a9b542b16fccca9a64dce1da248
+    image: dbrepo/query-service@sha256:cd18f4f8831ca1968eb74713ff034a0d89d14905278e50ad2a8778d715d76f99
     networks:
       core:
-      userdb:
     ports:
       - "9093:9093"
     env_file:
@@ -151,17 +161,14 @@ services:
     restart: "no"
     container_name: dbrepo-table-service
     hostname: table-service
-    build: ./dbrepo-table-service
-    image: dbrepo/table-service@sha256:bf6ed424d585e6831b7a85c51c1dd5bd2cb83e7fafa64aff661f0897f87ce04a
+    image: dbrepo/table-service@sha256:93ed69a9c42fd50dbb343e1e0768e1f58728ef0e542813483cbc934845fcc74d
     networks:
       core:
-      userdb:
     ports:
       - "9094:9094"
     env_file:
       - .env
     volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock"
       - "/tmp:/tmp"
     depends_on:
       dbrepo-authentication-service:
@@ -177,8 +184,7 @@ services:
     restart: "no"
     container_name: dbrepo-identifier-service
     hostname: identifier-service
-    build: ./dbrepo-identifier-service
-    image: dbrepo/identifier-service@sha256:75b03c7dc2125e5f34f3dfd9af73e7cb77729332ff7089a48c3033921154e9ce
+    image: dbrepo/identifier-service@sha256:85be08e43f93be08b9adba8d307a739ad1302cffa2b38ffb9ddadccefe9197d6
     networks:
       core:
     ports:
@@ -201,8 +207,7 @@ services:
     restart: "no"
     container_name: dbrepo-metadata-service
     hostname: metadata-service
-    build: ./dbrepo-metadata-service
-    image: dbrepo/metadata-service@sha256:51194d8e4540de492f06ea852fdee2b87cb3763096fb43e3657d328b072c9d5f
+    image: dbrepo/metadata-service@sha256:3e8cb1f2fa0bd01c473532e720d812be64cac3fd6c6e71c043b2080275e1d722
     networks:
       core:
     env_file:
@@ -223,18 +228,15 @@ services:
     restart: "no"
     container_name: dbrepo-analyse-service
     hostname: analyse-service
-    build: ./dbrepo-analyse-service
     image: dbrepo/analyse-service@sha256:bcf4a5d1b55860c70ccd3ab9bca07cab36e7ee43b706db24a2759aa981b990c8
     networks:
       core:
-      userdb:
     ports:
       - "5000:5000"
     env_file:
       - .env
     volumes:
       - "/tmp:/tmp"
-      - /var/run/docker.sock:/var/run/docker.sock
     logging:
       driver: json-file
 
@@ -242,8 +244,7 @@ services:
     restart: "no"
     container_name: dbrepo-user-service
     hostname: user-service
-    build: ./dbrepo-user-service
-    image: dbrepo/user-service@sha256:47081dbf3d69d98313b96063fde1f8e41ac7b2631ed29f2e76f9486a16904874
+    image: dbrepo/user-service@sha256:0aceaff50fb0d02c7c58057eb5b52a15f8452cddb3e09a59f40c09564ba6fa5c
     networks:
       core:
     ports:
@@ -264,8 +265,7 @@ services:
     restart: "no"
     container_name: dbrepo-semantics-service
     hostname: semantics-service
-    build: ./dbrepo-semantics-service
-    image: dbrepo/semantics-service@sha256:455bb3c74b59febf8e8b5e12ebdcf80651c482cd314a6e96a879533be73a9b35
+    image: dbrepo/semantics-service@sha256:38bff14e0e7d186de9c2f193bf278f39d81a986e08a6f126ffd41cb253013af4
     networks:
       core:
     ports:
@@ -274,7 +274,6 @@ services:
       - .env
     volumes:
       - "/tmp:/tmp"
-      - "/var/run/docker.sock:/var/run/docker.sock"
     depends_on:
       dbrepo-metadata-db:
         condition: service_healthy
@@ -289,7 +288,6 @@ services:
     restart: "no"
     container_name: dbrepo-broker-service
     hostname: broker-service
-    build: ./dbrepo-broker-service
     image: dbrepo/broker-service@sha256:6c7d210f3325c2b6a71d3df9d174bf556eebcdbf49d4b53626732670720eddab
     networks:
       core:
@@ -310,7 +308,7 @@ services:
     restart: always
     container_name: dbrepo-search-db
     hostname: search-db
-    image: opensearchproject/opensearch:2
+    image: opensearchproject/opensearch:2@sha256:7d7f306996c0901956e0c413c817f4e249bd3d27c9c9ea6460bd7da88df73039
     networks:
       core:
     ports:
@@ -338,8 +336,7 @@ services:
     restart: "no"
     container_name: dbrepo-ui
     hostname: ui
-    build: ./dbrepo-ui
-    image: dbrepo/ui@sha256:1580b3cd8e14885ac6d407157bc6696bb93d8c9f05b93a7c1cae71c69d0968d4
+    image: dbrepo/ui@sha256:273f6794c07843bc34cab3bb229fa65a289b56f8d7d2fe4ca53d95040c58d234
     networks:
       core:
       public:
@@ -354,7 +351,7 @@ services:
     restart: "no"
     container_name: dbrepo-gateway-service
     hostname: gateway-service
-    image: nginx:1.25-alpine-slim
+    image: nginx:1.25-alpine-slim@sha256:22414422d1ba07234d9b784f6453b4f150c0fa573ad0b62e163da12b68488ae1
     networks:
       core:
       public:
