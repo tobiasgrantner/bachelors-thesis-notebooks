@@ -88,3 +88,24 @@ Merging of services to reduce the number of services and improve the maintainabi
     - dbrepo/broker-service@sha256:6d90c251f24959ebb7c8dcf413185892ebe58bfbeed4b002fc79a9b790a2a2bd
     - dbrepo/metadata-service@sha256:46df137a6566167c880f0cac6ec4f4a750f1c31a2661818c0cbcbeea780dad0d
     - dbrepo/search-sync-agent@sha256:0788eda641558cb4c5e06d6f01ce1cfd6151b9f9875fa55f847ae3cf7ae491ec
+
+
+## Queue Rework
+
+Rework of the message queue pipeline as described in [this issue](https://gitlab.phaidra.org/fair-data-austria-db-repository/fda-services/-/issues/368).
+
+## After Queue Rework (2023-10-16)
+
+- **Git**: [34af9cdad40f011522eac02d2841602c1f3b60d1](https://gitlab.phaidra.org/fair-data-austria-db-repository/fda-services/-/tree/34af9cdad40f011522eac02d2841602c1f3b60d1)
+- **Pipeline**: [https://gitlab.phaidra.org/fair-data-austria-db-repository/fda-services/-/pipelines/8082]()
+- **Images**:
+    - dbrepo/analyse-service@sha256:657eb844f7d6ac65a435f0582605eb27e5ec23983e8f6fbd95dae197954db4c9 
+    - dbrepo/authentication-service@sha256:634e006d779650a6afb362c2d0e8d621f7d2e89f1384884542907b24bd4c6796
+    - dbrepo/metadata-db@sha256:326adea3ed7c1a48ac53919bb912e2f33a3c2e80bff06bf703062480b792b164
+    - dbrepo/ui@sha256:a30c40610d7187adddef57e2c8d2866341aa200cd635ec54c956f50d4020ff52
+    - dbrepo/broker-service@sha256:9f8ab75e2ca8ec81152066aabe6571b6d82dd6552a724a8a08b15841185399ba
+    - dbrepo/metadata-service@sha256:0e6834a2b7f2fe3036e22bcea9ff4c2c7ba03607e92e605e01254b45edb21fc8
+    - dbrepo/data-service@sha256:b4fe582fe8b4ef262db94cda95eb94c64ef73ba0a1c64948b8fb167402e1746e
+    - dbrepo/log-service@sha256:49c4ecf9eebdde40ac8b36254c92ab0f3ab68f0103dfcd7e645596d6f785e8fe
+    - dbrepo/search-db@sha256:bf66ee920a1321923b2d3c90bf657f83cda6a6df9dae98cfeb69c495f10a7420
+    - dbrepo/mirror-service@sha256:5085efebe4c7364ee93a95589ce2dbaa02ee95c409db4466e17a8aabd55f35ca
