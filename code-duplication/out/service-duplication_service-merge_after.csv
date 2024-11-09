@@ -1,0 +1,8 @@
+improvement,state,service,lines,duplicated,duplicated-density
+service-merge,after,dbrepo-analyse-service,556,0,0.0
+service-merge,after,dbrepo-authentication-service,33,0,0.0
+service-merge,after,dbrepo-broker-service,14,0,0.0
+service-merge,after,dbrepo-metadata-db,9,0,0.0
+service-merge,after,dbrepo-metadata-service,41345,1140,2.2
+service-merge,after,dbrepo-search-sync-agent,1119,71,5.4
+service-merge,after,dbrepo-ui,14439,1034,6.8

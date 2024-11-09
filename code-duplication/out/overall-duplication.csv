@@ -1,0 +1,5 @@
+improvement,state,lines,duplicated,duplicated-density
+environment-independence,before,60417,3977,5.3
+environment-independence,after,59232,4300,5.9
+service-merge,before,71913,6135,7.0
+service-merge,after,57515,2245,3.2

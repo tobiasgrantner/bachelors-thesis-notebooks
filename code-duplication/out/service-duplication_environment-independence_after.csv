@@ -1,0 +1,14 @@
+improvement,state,service,lines,duplicated,duplicated-density
+environment-independence,after,dbrepo-analyse-service,550,0,0.0
+environment-independence,after,dbrepo-authentication-service,30,0,0.0
+environment-independence,after,dbrepo-broker-service,14,0,0.0
+environment-independence,after,dbrepo-container-service,2964,269,7.0
+environment-independence,after,dbrepo-database-service,5728,689,9.2
+environment-independence,after,dbrepo-identifier-service,4495,387,6.7
+environment-independence,after,dbrepo-metadata-db,11048,556,3.8
+environment-independence,after,dbrepo-metadata-service,1514,178,9.6
+environment-independence,after,dbrepo-query-service,9458,832,6.9
+environment-independence,after,dbrepo-semantics-service,3280,299,7.3
+environment-independence,after,dbrepo-table-service,4657,801,13.5
+environment-independence,after,dbrepo-ui,12111,115,0.9
+environment-independence,after,dbrepo-user-service,3383,174,4.0
