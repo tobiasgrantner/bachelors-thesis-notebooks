@@ -8,11 +8,11 @@ def read_results(
     action: str, improvement: str, state: str, directory: PathLike = Path()
 ) -> pd.DataFrame:
     df = pd.read_csv(directory / f"{action}_{improvement}_{state}.csv")
-    df.columns = df.columns.str.capitalize()
+    df.columns = df.columns.str.replace("-", " ").str.title()
     df["Duration"] = df["Duration"] / 1e9
     df["Action"] = action.replace("-", " ")
-    df["Improvement"] = improvement.replace("-", " ").capitalize()
-    df["State"] = state.capitalize()
+    df["Improvement"] = improvement.replace("-", " ").title()
+    df["State"] = state.title()
     return df
 
 
